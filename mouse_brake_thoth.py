@@ -1,7 +1,6 @@
-
 if starting:    
     system.setThreadTiming(TimingTypes.HighresSystemTimer)
-    system.threadExecutionInterval = 3
+    system.threadExecutionInterval = 5
     
     def set_button(button, key):
         if keyboard.getKeyDown(key):
@@ -33,8 +32,8 @@ if starting:
     # Mouse settings
     # =============================================================================================
     global mouse_sensitivity, sensitivity_center_reduction
-    mouse_sensitivity = 6
-    sensitivity_center_reduction = 1.5
+    mouse_sensitivity = 5
+    sensitivity_center_reduction = 2.3
     
     # =============================================================================================
     # Ignition cut settings
@@ -66,16 +65,18 @@ if starting:
     throttle_blip_enabled = True
     
     # In milliseconds
-    throttle_increase_time = 95
+    throttle_increase_time = 110
     throttle_increase_time_after_ignition_cut = 0
-    throttle_increase_time_blip = 100
+    throttle_increase_time_blip = 50
     throttle_decrease_time = 100
     
-    global throttle, throttle_max, throttle_min
+    global throttle, throttle_max, throttle_min, mouse_vertical_min, mouse_vertical_max
     # Init values, do not change
     throttle_max = int32_max * throttle_inversion
     throttle_min = int32_min * throttle_inversion
     throttle = throttle_min
+    mouse_vertical_min = -1  # Define o valor mínimo para o movimento vertical do mouse
+    mouse_vertical_max = 1   # Define o valor máximo para o movimento vertical do mouse
     
     global throttle_increase_rate, throttle_decrease_rate
     # Set throttle behaviour with the increase and decrease time,
@@ -92,11 +93,13 @@ if starting:
     braking_increase_time = 100
     braking_decrease_time = 100
     
-    global braking, braking_max, braking_min
+    global braking, braking_max, braking_min, mouse_vertical_min, mouse_vertical_max
     # Init values, do not change
     braking_max = int32_max * braking_inversion
     braking_min = int32_min * braking_inversion
     braking = braking_min
+    mouse_vertical_min = -1  # Define o valor mínimo para o movimento vertical do mouse
+    mouse_vertical_max = 1   # Define o valor máximo para o movimento vertical do mouse
     
     global braking_increase_rate, braking_decrease_rate
     # Set braking behaviour with the increase and decrease time,
@@ -125,6 +128,8 @@ if starting:
 
 
 # assign button
+#vJoy[0].setButton(0,int(mouse.leftButton))
+#vJoy[0].setButton(1,int(mouse.rightButton))
 vJoy[0].setButton(1,int(keyboard.getKeyDown(Key.D)))
 vJoy[0].setButton(2,int(keyboard.getKeyDown(Key.A)))
 vJoy[0].setButton(3,int(keyboard.getKeyDown(Key.E)))
@@ -134,8 +139,9 @@ vJoy[0].setButton(6,int(keyboard.getKeyDown(Key.Space)))
 vJoy[0].setButton(7,int(keyboard.getKeyDown(Key.F)))
 vJoy[0].setButton(8,int(keyboard.getKeyDown(Key.G)))
 vJoy[0].setButton(9,int(keyboard.getKeyDown(Key.H)))
-vJoy[0].setButton(10,int(keyboard.getKeyDown(Key.J)))
-
+vJoy[0].setButton(10,int(keyboard.getKeyDown(Key.B)))
+vJoy[0].setButton(11,int(keyboard.getKeyDown(Key.N)))
+vJoy[0].setButton(12,int(keyboard.getKeyDown(Key.X)))
 # =================================================================================================
 # LOOP START
 # =================================================================================================
@@ -161,7 +167,7 @@ v.x = int(round(steering))
 # Clutch logic
 # =================================================================================================
 if keyboard.getKeyDown(Key.C):
-	clutch = clutch + clutch_increase_rate
+    clutch = clutch + clutch_increase_rate
 else:
     clutch = clutch + clutch_decrease_rate
 
@@ -173,27 +179,47 @@ elif clutch < clutch_min * clutch_inversion:
 v.z = clutch
 
 # =================================================================================================
-# Throttle logic
+# Throttle and Brake logic using vertical mouse movement
 # =================================================================================================
-if keyboard.getKeyDown(Key.W):
-    throttle = throttle + throttle_increase_rate
+
+# Capturando o movimento vertical do mouse
+mouse_vertical = mouse.deltaY * mouse_sensitivity
+
+# Ajustando o throttle com base no movimento vertical do mouse
+if mouse_vertical < 0:
+    throttle_increase = throttle_increase_rate * abs(mouse_vertical) / mouse_vertical_max
+    throttle += throttle_increase * system.threadExecutionInterval / 1000
 else:
-	throttle = throttle + throttle_decrease_rate
+    throttle_decrease = throttle_decrease_rate * mouse_vertical / mouse_vertical_min
+    throttle -= throttle_decrease * system.threadExecutionInterval / 1000
 
-if throttle > throttle_max * throttle_inversion:
-    throttle = throttle_max * throttle_inversion
-elif throttle < throttle_min * throttle_inversion:
-    throttle = throttle_min * throttle_inversion
+# Limitando o throttle aos valores máximo e mínimo
+if throttle > throttle_max:
+    throttle = throttle_max
+elif throttle < throttle_min:
+    throttle = throttle_min
 
-v.y = throttle
+# Ajustando o brake com base no movimento vertical inverso do mouse
+if mouse_vertical > 0:
+    braking_increase = braking_increase_rate * abs(mouse_vertical) / mouse_vertical_max
+    braking += braking_increase * system.threadExecutionInterval / 1000
+else:
+    braking_decrease = braking_decrease_rate * mouse_vertical / mouse_vertical_min
+    braking -= braking_decrease * system.threadExecutionInterval / 1000
+
+# Limitando o brake aos valores máximo e mínimo
+if braking > braking_max:
+    braking = braking_max
+elif braking < braking_min:
+    braking = braking_min
+
+# Atribuindo os valores apropriados às saídas do VJoy
+v.y = throttle * throttle_inversion
+v.rz = braking * braking_inversion
 
 # =================================================================================================
 # Braking logic
 # =================================================================================================
-if keyboard.getKeyDown(Key.S):
-    braking = braking + braking_increase_rate
-else:
-    braking = braking + braking_decrease_rate
 
 if braking > braking_max * braking_inversion:
     braking = braking_max * braking_inversion

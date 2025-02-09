@@ -66,7 +66,7 @@ if starting:
     throttle_blip_enabled = True
     
     # In milliseconds
-    throttle_increase_time = 100
+    throttle_increase_time = 110
     throttle_increase_time_after_ignition_cut = 0
     throttle_increase_time_blip = 50
     throttle_decrease_time = 100
@@ -193,49 +193,53 @@ v.y = throttle
 # =================================================================================================
 # Braking logic
 # =================================================================================================
-
-#92%
+# Define os valores de frenagem para cada tecla
+# 92% brake
 if keyboard.getKeyDown(Key.Space):
-    braking = 16900
+    target_braking = 15000
+# 85% brake
+elif keyboard.getKeyDown(Key.S):
+    target_braking = 10000
+# 70% brake
+elif mouse.leftButton:
+    target_braking = 8000
+# 60% brake
+elif mouse.rightButton:
+    target_braking = 4500
+# 50% brake (tecla B)
+elif keyboard.getKeyDown(Key.B):
+    target_braking = -5000
+# 50% brake (tecla M)
+elif keyboard.getKeyDown(Key.M):
+    target_braking = -11500
+# 44% brake
+elif keyboard.getKeyDown(Key.V):
+    target_braking = -3500
+# 30% brake
+elif keyboard.getKeyDown(Key.LeftControl):
+    target_braking = 0
+# 14% brake
+elif keyboard.getKeyDown(Key.N):
+    target_braking = -8500
+# Nenhuma tecla pressionada - diminui gradualmente
 else:
+    target_braking = braking + braking_decrease_rate
+
+# Aumenta gradualmente o valor de frenagem até o valor alvo
+if braking < target_braking:
+    braking = braking + braking_increase_rate
+elif braking > target_braking:
     braking = braking + braking_decrease_rate
 
-#78%
-if keyboard.getKeyDown(Key.S):
-    braking = 11600
-else:
-    braking = braking + braking_decrease_rate
-    
-#60%
-if keyboard.getKeyDown(Key.B):
-    braking = 5000
-else:
-    braking = braking + braking_decrease_rate    
-    
-#50% brake
-if keyboard.getKeyDown(Key.N):
-         braking = 800
-else:
-    braking = braking + braking_decrease_rate
-    
-#30% brake
-if keyboard.getKeyDown(Key.LeftControl):
-         braking = -5700
-else:
-    braking = braking + braking_decrease_rate    
-
-#14% brake
-if keyboard.getKeyDown(Key.V):
-         braking = -10000
-else:
-    braking = braking + braking_decrease_rate
-
+# Garante que o valor de frenagem não ultrapasse os limites
 if braking > braking_max * braking_inversion:
     braking = braking_max * braking_inversion
 elif braking < braking_min * braking_inversion:
     braking = braking_min * braking_inversion
 
+# Aplica o valor final de frenagem
 v.rz = braking
+
 
 # =================================================================================================
 # Buttons post-throttle logic

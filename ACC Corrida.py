@@ -66,7 +66,7 @@ if starting:
     throttle_blip_enabled = True
     
     # In milliseconds
-    throttle_increase_time = 130
+    throttle_increase_time = 100
     throttle_increase_time_after_ignition_cut = 0
     throttle_increase_time_blip = 50
     throttle_decrease_time = 100
@@ -194,30 +194,56 @@ v.y = throttle
 # Braking logic
 # =================================================================================================
 
-#80
+
+
+
+
 if keyboard.getKeyDown(Key.S):
-    braking = 18900
+    target_braking = 21500 # 100% freio
+# Se a tecla "Space" for pressionada, o freio aumenta gradualmente até 80%
+elif keyboard.getKeyDown(Key.Space):
+    target_braking = 15000 # 80% freio
+# Se o botão esquerdo do mouse for pressionado, o freio aumenta gradualmente até 70%
+elif mouse.leftButton:
+    target_braking = 11000  # 70% freio
+# Se o botão direito do mouse for pressionado, o freio aumenta gradualmente até 60%
+elif mouse.rightButton:
+    target_braking = 7000  # 60% freio
+# Se a tecla "LeftControl" for pressionada, o freio aumenta gradualmente até 50%
+elif keyboard.getKeyDown(Key.N):
+    target_braking = 500  # 50% freio
+# Se a tecla "V" for pressionada, o freio aumenta gradualmente até 20%
+elif keyboard.getKeyDown(Key.V):
+    target_braking = -4000  # 20% freio
+# Se a tecla "B" for pressionada, o freio aumenta gradualmente até -20%
+elif keyboard.getKeyDown(Key.B):
+    target_braking = -14000  # -20% freio
+# Se nenhuma tecla de freio for pressionada, o freio começa a diminuir gradualmente
+#elif keyboard.getKeyDown(Key.LeftShift):
+   # target_braking = -2500
+#elif keyboard.getKeyDown(Key.M):
+ #   target_braking = -11500   
 else:
-    braking = braking + braking_decrease_rate
-    
-#60% brake
-if keyboard.getKeyDown(Key.LeftControl):
-         braking = 800
-else:
-    braking = braking + braking_decrease_rate
+    target_braking = braking_min  # Valor mínimo de freio
 
-#10% brake
-if keyboard.getKeyDown(Key.LeftShift):
-         braking = -13000
-else:
-    braking = braking + braking_decrease_rate
+# Aumenta ou diminui o valor de freio gradualmente até atingir o valor alvo (target_braking)
+if braking < target_braking:
+    braking = braking + braking_increase_rate  # Incrementa até o alvo
+elif braking > target_braking:
+    braking = braking + braking_decrease_rate  # Decrementa até o alvo
 
+# Limita o valor de "braking" para garantir que não ultrapasse o máximo ou mínimo
 if braking > braking_max * braking_inversion:
     braking = braking_max * braking_inversion
 elif braking < braking_min * braking_inversion:
     braking = braking_min * braking_inversion
 
+# Atribui o valor atualizado de freio ao eixo virtual
 v.rz = braking
+
+
+
+
 
 # =================================================================================================
 # Buttons post-throttle logic

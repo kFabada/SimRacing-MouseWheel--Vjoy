@@ -1,7 +1,7 @@
 
 if starting:    
     system.setThreadTiming(TimingTypes.HighresSystemTimer)
-    system.threadExecutionInterval = 3
+    system.threadExecutionInterval = 5
     
     def set_button(button, key):
         if keyboard.getKeyDown(key):
@@ -34,7 +34,7 @@ if starting:
     # =============================================================================================
     global mouse_sensitivity, sensitivity_center_reduction
     mouse_sensitivity = 6
-    sensitivity_center_reduction = 1.5
+    sensitivity_center_reduction = 2.3
     
     # =============================================================================================
     # Ignition cut settings
@@ -66,10 +66,10 @@ if starting:
     throttle_blip_enabled = True
     
     # In milliseconds
-    throttle_increase_time = 95
+    throttle_increase_time = 100
     throttle_increase_time_after_ignition_cut = 0
-    throttle_increase_time_blip = 100
-    throttle_decrease_time = 100
+    throttle_increase_time_blip = 50
+    throttle_decrease_time = 150
     
     global throttle, throttle_max, throttle_min
     # Init values, do not change
@@ -89,8 +89,8 @@ if starting:
     # Braking settings
     # =============================================================================================
     # In milliseconds
-    braking_increase_time = 100
-    braking_decrease_time = 100
+    braking_increase_time = 50
+    braking_decrease_time = 130
     
     global braking, braking_max, braking_min
     # Init values, do not change
@@ -125,6 +125,8 @@ if starting:
 
 
 # assign button
+#vJoy[0].setButton(0,int(mouse.leftButton))
+#vJoy[0].setButton(1,int(mouse.rightButton))
 vJoy[0].setButton(1,int(keyboard.getKeyDown(Key.D)))
 vJoy[0].setButton(2,int(keyboard.getKeyDown(Key.A)))
 vJoy[0].setButton(3,int(keyboard.getKeyDown(Key.E)))
@@ -134,8 +136,9 @@ vJoy[0].setButton(6,int(keyboard.getKeyDown(Key.Space)))
 vJoy[0].setButton(7,int(keyboard.getKeyDown(Key.F)))
 vJoy[0].setButton(8,int(keyboard.getKeyDown(Key.G)))
 vJoy[0].setButton(9,int(keyboard.getKeyDown(Key.H)))
-vJoy[0].setButton(10,int(keyboard.getKeyDown(Key.J)))
-
+vJoy[0].setButton(10,int(keyboard.getKeyDown(Key.B)))
+vJoy[0].setButton(11,int(keyboard.getKeyDown(Key.N)))
+vJoy[0].setButton(12,int(keyboard.getKeyDown(Key.X)))
 # =================================================================================================
 # LOOP START
 # =================================================================================================
@@ -175,6 +178,7 @@ v.z = clutch
 # =================================================================================================
 # Throttle logic
 # =================================================================================================
+
 if keyboard.getKeyDown(Key.W):
     throttle = throttle + throttle_increase_rate
 else:
@@ -190,17 +194,41 @@ v.y = throttle
 # =================================================================================================
 # Braking logic
 # =================================================================================================
-if keyboard.getKeyDown(Key.S):
-    braking = braking + braking_increase_rate
+# Define os valores de frenagem para cada tecla
+if keyboard.getKeyDown(Key.Space):
+    braking = int(int32_max * 0.99)  # 99%
+elif keyboard.getKeyDown(Key.S):
+    braking = int(int32_max * 0.70)  # 85%
+elif keyboard.getKeyDown(Key.LeftControl):
+    braking = int(int32_max * 0.10)  # 70%
+elif mouse.leftButton:
+    braking = int(int32_max * 0.50)  # 60%
+elif mouse.rightButton:
+    braking = int(int32_max * 0.30)  # 50%
+elif keyboard.getKeyDown(Key.V):
+    braking = int(int32_max * -0.20)  # 40%
+elif keyboard.getKeyDown(Key.B):
+    braking = int(int32_max * -0.30)  # 30%
+elif keyboard.getKeyDown(Key.N):
+    braking = int(int32_max * -0.50)  # 20%
+elif keyboard.getKeyDown(Key.M):
+    braking = int(int32_max * -0.70)  # 10%
 else:
-    braking = braking + braking_decrease_rate
+    # Diminui suavemente até o mínimo
+    braking -= abs(braking_decrease_rate)
+    if braking < int32_min:
+        braking = int32_min
 
-if braking > braking_max * braking_inversion:
-    braking = braking_max * braking_inversion
-elif braking < braking_min * braking_inversion:
-    braking = braking_min * braking_inversion
+# Garante que o valor de frenagem fique dentro dos limites
+if braking > int32_max:
+    braking = int32_max
+elif braking < int32_min:
+    braking = int32_min
 
+
+# Aplica o valor final de frenagem
 v.rz = braking
+
 
 # =================================================================================================
 # Buttons post-throttle logic
