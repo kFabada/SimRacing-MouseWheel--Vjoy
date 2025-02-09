@@ -1,6 +1,6 @@
 SimRacing Wheel Mouse
 
-!!Cada Arquivo e para determinado game e usado por mim so escolher no Freepie e executar o script
+Cada Arquivo e para determinado game e usado por mim so escolher no Freepie e executar o script
 
 Para fazer funcionar e conseguir usar o mouse no game escolhido e preciso baixar e instalar 2 programas para interpretar o mouse como um joystick.
 
